@@ -38,17 +38,29 @@ var requestHandler = function(request, response) {
   // other than plain text, like JSON or HTML.
   headers['Content-Type'] = 'text/plain';
 
-  var messages = {
+  var data = {
     results: [
-      {objectId: 'ZrAbv2392O', username: 'dwrz', room: 'lobby', text: 'Hello hello', createdAt: '2017-10-30T23:18:15.324Z'} ,
-      {objectId: 'UiEdkfemLj', username: 'dwrz', room: 'lobby', text: 'Hello hello', createdAt: '2017-10-30T23:18:12.839Z'} ,
-      {objectId: '7987syuz8l', username: 'Anton', roomname: 'superlobby', text: 'Devin', createdAt: '2017-10-30T22:54:06.011Z'} ,
-      {objectId: 'yfV6Pq8PsA', username: 'Anton', roomname: 'All Messages', text: 'Devin', createdAt: '2017-10-30T22:53:54.637Z'} ,
-      {objectId: '54Yr5lkYxm', username: 'pupper', text: 'bork', roomname: 'lobby', createdAt: '2017-10-30T21:58:36.950Z'} 
+      {objectId: 'ZrAbv2392O', username: 'dwrz', room: 'lobby', text: 'Hello hello', createdAt: '2017-10-30T23:18:15.324Z'} ,
+      {objectId: 'UiEdkfemLj', username: 'dwrz', room: 'lobby', text: 'Hello hello', createdAt: '2017-10-30T23:18:12.839Z'} ,
+      {objectId: '7987syuz8l', username: 'Anton', roomname: 'superlobby', text: 'Devin', createdAt: '2017-10-30T22:54:06.011Z'} ,
+      {objectId: 'yfV6Pq8PsA', username: 'Anton', roomname: 'All Messages', text: 'Devin', createdAt: '2017-10-30T22:53:54.637Z'} ,
+      {objectId: '54Yr5lkYxm', username: 'pupper', text: 'bork', roomname: 'lobby', createdAt: '2017-10-30T21:58:36.950Z'}
       ]
   };
-
   var serverResponse = 'Hello world!';
+
+  // generate random objectId
+  var makeObjId = function() {
+    var result = '';
+    var chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890';
+    var len = 10;
+
+    for (var i = 0; i < len; i ++) {
+      result += chars[(Math.floor(Math.random() + chars.length))];
+    }
+
+    return result;
+  }
 
   // main statements for GET and POST
   if (request.method === 'OPTIONS') {
@@ -57,12 +69,42 @@ var requestHandler = function(request, response) {
   } else if (request.method === 'GET') {
     // send back the messages array or error
     headers['Content-Type'] = 'application/json';
-    serverResponse = JSON.stringify(messages);
+
+    var dataSliced = {
+      results: data.results.slice(0, 99)
+    };
+
+    serverResponse = JSON.stringify(dataSliced);
   } else if (request.method === 'POST') {
-    // adds new data object to beginning of array
-    // if data length === 100
-      // pop off last data object
-    // returns info from post success
+    var body = [];
+    request.on('data', function(chunk) {
+      body.push(chunk);
+    }).on('end', function() {
+      body = Buffer.concat(body).toString().split('&');
+      // ["username=pupper", "text=bork", "roomname=lobby"]
+    });
+    // var timeStamper = function() {
+    var dt = new Date();
+    var dateTime = dt.toISOString();
+
+    // create new temp object
+    var postObject = {
+      objectId: makeObjId(),
+      username: body[0],
+      text: body[1],
+      createdAt: dateTime
+    }
+
+    // if there is a roomname
+    if (body[2] && body[2].length > 9) {
+      // put it in
+      postObject.roomname = body[2].slice(9);
+    }
+
+    // data.results.unshift(new temp obj) to add to beginning of array
+    data.results.unshift(postObject);
+
+    // serverResponse set to object with objectId and createdAt
       //   {objectId: "KaVfKM585f", createdAt: "2017-10-31T02:35:51.962Z"}
       // createdAt:"2017-10-31T02:35:51.962Z"
       // objectId:"KaVfKM585f"
