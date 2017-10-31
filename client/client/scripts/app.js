@@ -66,6 +66,7 @@ var app = {
       data: { order: '-createdAt'},
       contentType: 'application/json',
       success: function (data) {
+        console.log(data);
         // if we don't have any new messages, don't do anything
         if (!data.results || !data.results.length) { return; }
 
@@ -169,7 +170,7 @@ var app = {
     $message.text(message.text).appendTo($chat);
 
     // add message to chat
-    app.$chats.append($chat);
+    app.$chats.prepend($chat);
   },
 
   handleUsernameClick: function(event) {

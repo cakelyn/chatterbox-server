@@ -12,6 +12,16 @@ this file and include it in basic-server.js so that it actually works.
 
 **************************************************************/
 
+var data = {
+  results: [
+    {objectId: '54Yr5lkYxm', username: 'pupper', text: 'bork', roomname: 'lobby', createdAt: '2017-10-30T21:58:36.950Z'},
+    {objectId: 'yfV6Pq8PsA', username: 'Anton', roomname: 'All Messages', text: 'Devin', createdAt: '2017-10-30T22:53:54.637Z'},
+    {objectId: '7987syuz8l', username: 'Anton', roomname: 'superlobby', text: 'Devin', createdAt: '2017-10-30T22:54:06.011Z'},
+    {objectId: 'UiEdkfemLj', username: 'dwrz', room: 'lobby', text: 'Hello hello', createdAt: '2017-10-30T23:18:12.839Z'},
+    {objectId: 'ZrAbv2392O', username: 'dwrz', room: 'lobby', text: 'Hello hello', createdAt: '2017-10-30T23:18:15.324Z'},
+    ]
+};
+
 var requestHandler = function(request, response) {
   // Request and Response come from node's http module.
   // They include information about both the incoming request, such as
@@ -38,15 +48,6 @@ var requestHandler = function(request, response) {
   // other than plain text, like JSON or HTML.
   headers['Content-Type'] = 'text/plain';
 
-  var data = {
-    results: [
-      {objectId: 'ZrAbv2392O', username: 'dwrz', room: 'lobby', text: 'Hello hello', createdAt: '2017-10-30T23:18:15.324Z'} ,
-      {objectId: 'UiEdkfemLj', username: 'dwrz', room: 'lobby', text: 'Hello hello', createdAt: '2017-10-30T23:18:12.839Z'} ,
-      {objectId: '7987syuz8l', username: 'Anton', roomname: 'superlobby', text: 'Devin', createdAt: '2017-10-30T22:54:06.011Z'} ,
-      {objectId: 'yfV6Pq8PsA', username: 'Anton', roomname: 'All Messages', text: 'Devin', createdAt: '2017-10-30T22:53:54.637Z'} ,
-      {objectId: '54Yr5lkYxm', username: 'pupper', text: 'bork', roomname: 'lobby', createdAt: '2017-10-30T21:58:36.950Z'}
-      ]
-  };
   var serverResponse = 'Hello world!';
 
   // generate random objectId
@@ -56,58 +57,74 @@ var requestHandler = function(request, response) {
     var len = 10;
 
     for (var i = 0; i < len; i ++) {
-      result += chars[(Math.floor(Math.random() + chars.length))];
+      result += chars[(Math.floor(Math.random() * chars.length))];
     }
 
     return result;
   }
 
-  // main statements for GET and POST
+  /*
+   *  OPTIONS RESPONSE
+   */
+
   if (request.method === 'OPTIONS') {
     headers = defaultCorsHeaders;
     statusCode = 200;
+
+  /*
+   *  GET RESPONSE
+   */
+
   } else if (request.method === 'GET') {
     // send back the messages array or error
     headers['Content-Type'] = 'application/json';
 
+    // select only the first 100 messages
     var dataSliced = {
       results: data.results.slice(0, 99)
     };
 
+    // send messages
     serverResponse = JSON.stringify(dataSliced);
+
+  /*
+   *  POST RESPONSE
+   */
+
   } else if (request.method === 'POST') {
     var body = [];
+
+    // get the body of the request
     request.on('data', function(chunk) {
       body.push(chunk);
+
+    // when request has been handled, format data into a new object
     }).on('end', function() {
       body = Buffer.concat(body).toString().split('&');
-      // ["username=pupper", "text=bork", "roomname=lobby"]
+
+      // generates current date and time
+      var dt = new Date();
+      var dateTime = dt.toISOString();
+      var username = body[0].slice(9);
+      var text = body[1].slice(5);
+
+      var postObject = {
+        objectId: makeObjId(),
+        username: username.split('+').join(' '),
+        text: text.split('+').join(' '),
+        createdAt: dateTime
+      }
+
+      // checks if there is a roomname
+      if (body[2] && body[2].length > 9) {
+        // put it in
+        var roomname = body[2].slice(9);
+        postObject.roomname = roomname.split('+').join(' ');
+      }
+
+      // update the data results array with the new object
+      data.results.push(postObject);
     });
-    // var timeStamper = function() {
-    var dt = new Date();
-    var dateTime = dt.toISOString();
-
-    // create new temp object
-    var postObject = {
-      objectId: makeObjId(),
-      username: body[0],
-      text: body[1],
-      createdAt: dateTime
-    }
-
-    // if there is a roomname
-    if (body[2] && body[2].length > 9) {
-      // put it in
-      postObject.roomname = body[2].slice(9);
-    }
-
-    // data.results.unshift(new temp obj) to add to beginning of array
-    data.results.unshift(postObject);
-
-    // serverResponse set to object with objectId and createdAt
-      //   {objectId: "KaVfKM585f", createdAt: "2017-10-31T02:35:51.962Z"}
-      // createdAt:"2017-10-31T02:35:51.962Z"
-      // objectId:"KaVfKM585f"
   }
 
   // .writeHead() writes to the request line and headers of the response,
