@@ -14,35 +14,17 @@ this file and include it in basic-server.js so that it actually works.
 
 var requestHandler = function(request, response) {
   // Request and Response come from node's http module.
-  //
   // They include information about both the incoming request, such as
   // headers and URL, and about the outgoing response, such as its status
   // and content.
-  //
   // Documentation for both request and response can be found in the HTTP section at
   // http://nodejs.org/documentation/api/
 
   // Do some basic logging.
-  //
   // Adding more logging to your server can be an easy way to get passive
   // debugging help, but you should always be careful about leaving stray
   // console.logs in your code.
   console.log('Serving request type ' + request.method + ' for url ' + request.url);
-
-  // const { headers, method, url } = request;
-  // var body = [];
-
-  // request.on('error', (err) => {
-  //   console.error(err);
-  // }).on('data', (chunk) => {
-  //   body.push(chunk);
-  // }).on('end', () => {
-  //   body = Buffer.concat(body).toString();
-  //   // At this point, we have the headers, method, url and body, and can now
-  //   // do whatever we need to in order to respond to this request.
-  // });
-
-  console.log(request.method);
 
   // The outgoing status.
   // need to set response.statusCode to 200 or 404 depending on success
@@ -52,19 +34,38 @@ var requestHandler = function(request, response) {
   var headers = defaultCorsHeaders;
 
   // Tell the client we are sending them plain text.
-  //
   // You will need to change this if you are sending something
   // other than plain text, like JSON or HTML.
   headers['Content-Type'] = 'text/plain';
 
+  var messages = {
+    results: [
+      {objectId: 'ZrAbv2392O', username: 'dwrz', room: 'lobby', text: 'Hello hello', createdAt: '2017-10-30T23:18:15.324Z'} ,
+      {objectId: 'UiEdkfemLj', username: 'dwrz', room: 'lobby', text: 'Hello hello', createdAt: '2017-10-30T23:18:12.839Z'} ,
+      {objectId: '7987syuz8l', username: 'Anton', roomname: 'superlobby', text: 'Devin', createdAt: '2017-10-30T22:54:06.011Z'} ,
+      {objectId: 'yfV6Pq8PsA', username: 'Anton', roomname: 'All Messages', text: 'Devin', createdAt: '2017-10-30T22:53:54.637Z'} ,
+      {objectId: '54Yr5lkYxm', username: 'pupper', text: 'bork', roomname: 'lobby', createdAt: '2017-10-30T21:58:36.950Z'} 
+      ]
+  };
+
+  var serverResponse = 'Hello world!';
+
+  // main statements for GET and POST
   if (request.method === 'OPTIONS') {
     headers = defaultCorsHeaders;
     statusCode = 200;
   } else if (request.method === 'GET') {
-    // do things with GET
-    console.log('GET request');
+    // send back the messages array or error
+    headers['Content-Type'] = 'application/json';
+    serverResponse = JSON.stringify(messages);
   } else if (request.method === 'POST') {
-    // do post things
+    // adds new data object to beginning of array
+    // if data length === 100
+      // pop off last data object
+    // returns info from post success
+      //   {objectId: "KaVfKM585f", createdAt: "2017-10-31T02:35:51.962Z"}
+      // createdAt:"2017-10-31T02:35:51.962Z"
+      // objectId:"KaVfKM585f"
   }
 
   // .writeHead() writes to the request line and headers of the response,
@@ -75,10 +76,9 @@ var requestHandler = function(request, response) {
   // anything back to the client until you do. The string you pass to
   // response.end() will be the body of the response - i.e. what shows
   // up in the browser.
-  //
   // Calling .end "flushes" the response's internal buffer, forcing
   // node to actually send all the data over to the client.
-  response.end('Hello, Benji!');
+  response.end(serverResponse);
 };
 
 // These headers will allow Cross-Origin Resource Sharing (CORS).

@@ -67,6 +67,7 @@ var app = {
       contentType: 'application/json',
       success: function (data) {
         // if we don't have any new messages, don't do anything
+        console.log(data);
         if (!data.results || !data.results.length) { return; }
 
         // store messages
