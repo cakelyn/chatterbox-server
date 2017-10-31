@@ -29,7 +29,23 @@ var requestHandler = function(request, response) {
   // console.logs in your code.
   console.log('Serving request type ' + request.method + ' for url ' + request.url);
 
+  // const { headers, method, url } = request;
+  // var body = [];
+
+  // request.on('error', (err) => {
+  //   console.error(err);
+  // }).on('data', (chunk) => {
+  //   body.push(chunk);
+  // }).on('end', () => {
+  //   body = Buffer.concat(body).toString();
+  //   // At this point, we have the headers, method, url and body, and can now
+  //   // do whatever we need to in order to respond to this request.
+  // });
+
+  console.log(request.method);
+
   // The outgoing status.
+  // need to set response.statusCode to 200 or 404 depending on success
   var statusCode = 200;
 
   // See the note below about CORS headers.
@@ -40,6 +56,16 @@ var requestHandler = function(request, response) {
   // You will need to change this if you are sending something
   // other than plain text, like JSON or HTML.
   headers['Content-Type'] = 'text/plain';
+
+  if (request.method === 'OPTIONS') {
+    headers = defaultCorsHeaders;
+    statusCode = 200;
+  } else if (request.method === 'GET') {
+    // do things with GET
+    console.log('GET request');
+  } else if (request.method === 'POST') {
+    // do post things
+  }
 
   // .writeHead() writes to the request line and headers of the response,
   // which includes the status and all headers.
@@ -52,7 +78,7 @@ var requestHandler = function(request, response) {
   //
   // Calling .end "flushes" the response's internal buffer, forcing
   // node to actually send all the data over to the client.
-  response.end('Hello, World!');
+  response.end('Hello, Benji!');
 };
 
 // These headers will allow Cross-Origin Resource Sharing (CORS).
@@ -71,3 +97,4 @@ var defaultCorsHeaders = {
   'access-control-max-age': 10 // Seconds.
 };
 
+exports.requestHandler = requestHandler;
