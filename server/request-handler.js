@@ -16,6 +16,56 @@ var data = {
     ]
 };
 
+var actions = {
+  'OPTIONS': function(request, response) {
+    sendResponse(response, null);
+  },
+  'GET': function(request, response) {
+    sendResponse(response, data);
+  },
+  'POST': function(request, response) {
+    collectData(request, function(body) {
+      var dateTime = currentDateTime;
+      var username = body[0].slice(9);
+      var text = body[1].slice(5);
+      var postObject = {
+        objectId: makeObjId(),
+        username: username.split('+').join(' '),
+        text: text.split('+').join(' '),
+        createdAt: dateTime
+      };
+
+      // checks if there is a roomname
+      if (body[2] && body[2].length > 9) {
+        // put it in
+        var roomname = body[2].slice(9);
+        postObject.roomname = roomname.split('+').join(' ');
+      }
+
+      // update the data results array with the new object
+      data.results.push(postObject);
+      sendResponse(response, postObject, 201);
+    });
+  }
+};
+
+var sendResponse = function(response, data, statusCode) {
+  var statusCode = statusCode || 200;
+  response.writeHead(statusCode, defaultCorsHeaders);
+  response.end(JSON.stringify(data));
+};
+
+var collectData = function(request, callback) {
+  var body = [];
+  request.on('data', function(chunk) {
+    body.push(chunk);
+  });
+  request.on('end', function() {
+    body = Buffer.concat(body).toString().split('&');
+    callback(body);
+  });
+};
+
 // generate random objectId
 var makeObjId = function() {
   var result = '';
@@ -27,66 +77,22 @@ var makeObjId = function() {
   }
 
   return result;
-}
+};
 
-var sendResponse = function(response, data, statusCode) {
-  var statusCode = statusCode;
-  response.writeHead(statusCode, defaultCorsHeaders);
-  response.end(JSON.stringify(data));
-}
+var currentDateTime = function() {
+  var dt = new Date();
+  return dt.toISOString();
+};
 
 var requestHandler = function(request, response) {
 
-  console.log('Serving request type ' + request.method + ' for url ' + request.url);
-
-  if (request.url.indexOf('classes/messages') < 0) {
-    sendResponse(response, null, 404);
-  } else if (request.method === 'OPTIONS') {
-    sendResponse(response, null, 200);
-  } else if (request.method === 'GET') {
-    // select only the first 100 messages
-    var dataSliced = {
-      results: data.results.slice(0, 99)
-    };
-    // send back the messages array or error
-    sendResponse(response, dataSliced, 200);
-  } else if (request.method === 'POST') {
-    var body = [];
-
-    // get the body of the request
-    request.on('data', function(chunk) {
-      body.push(chunk);
-
-    // when request has been handled, format data into a new object
-    }).on('end', function() {
-      body = Buffer.concat(body).toString().split('&');
-
-      // generates current date and time
-      var dt = new Date();
-      var dateTime = dt.toISOString();
-      var username = body[0].slice(9);
-      var text = body[1].slice(5);
-
-      var postObject = {
-        objectId: makeObjId(),
-        username: username.split('+').join(' '),
-        text: text.split('+').join(' '),
-        createdAt: dateTime
-      }
-
-      // checks if there is a roomname
-      if (body[2] && body[2].length > 9) {
-        // put it in
-        var roomname = body[2].slice(9);
-        postObject.roomname = roomname.split('+').join(' ');
-      }
-
-      // update the data results array with the new object
-      data.results.push(postObject);
-      console.log(postObject);
-      sendResponse(response, postObject, 201)
-    });
+  var action = actions[request.method];
+  if (action) {
+    action(request, response);
+  } else {
+    sendResponse(response, '', 404);
   }
 };
 
 exports.requestHandler = requestHandler;
+exports.sendResponse = sendResponse;
