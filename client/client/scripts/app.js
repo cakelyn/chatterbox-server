@@ -7,7 +7,7 @@ $(document).ready(function() {
 
 var app = {
   // set up app variables
-  server: 'http://127.0.0.1:3000/chatterbox/classes/messages/',
+  server: 'http://127.0.0.1:3000/classes/messages/',
   username: 'anon',
   friends: {},
   latestMessageId: 0,
